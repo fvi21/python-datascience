@@ -1,10 +1,4 @@
-FROM alpine:3.8
-
-LABEL MAINTAINER="Faizan Bashir <faizan.ibn.bashir@gmail.com>"
-
-# Linking of locale.h as xlocale.h
-# This is done to ensure successfull install of python numpy package
-# see https://forum.alpinelinux.org/comment/690#comment-690 for more information.
+FROM alpine:latest
 
 WORKDIR /var/www/
 
@@ -41,7 +35,7 @@ ENV PACKAGES="\
     tcl \
     tk \
     libssl1.0 \
-"
+    "
 
 # PYTHON DATA SCIENCE PACKAGES
 #   * numpy: support for large, multi-dimensional arrays and matrices
@@ -57,16 +51,21 @@ ENV PYTHON_PACKAGES="\
     scikit-learn \
     pandas \
     nltk \
-" 
+    " 
 
-RUN apk add --no-cache --virtual build-dependencies python --update py-pip \
+RUN apk add --no-cache --virtual build-dependencies python3 \
     && apk add --virtual build-runtime \
-    build-base python-dev openblas-dev freetype-dev pkgconfig gfortran \
+    build-base python3-dev openblas-dev freetype-dev pkgconfig gfortran \
     && ln -s /usr/include/locale.h /usr/include/xlocale.h \
-    && pip install --upgrade pip \
+    && python3 -m ensurepip \
+    && rm -r /usr/lib/python*/ensurepip \
+    && pip3 install --upgrade pip setuptools \
+    && ln -sf /usr/bin/python3 /usr/bin/python \
+    && ln -sf pip3 /usr/bin/pip \
+    && rm -r /root/.cache \
     && pip install --no-cache-dir $PYTHON_PACKAGES \
     && apk del build-runtime \
     && apk add --no-cache --virtual build-dependencies $PACKAGES \
     && rm -rf /var/cache/apk/*
 
-CMD ["python"]
+CMD ["python3"]
